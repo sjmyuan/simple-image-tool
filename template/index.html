@@ -6,13 +6,13 @@
 </head>
 
 <body>
-  <div>
+  <div style="display: flex; flex-direction: column; align-items: center;">
     <div style="display:flex;flex-flow:row wrap;">
       {% for image in images %}
       <img style="margin:10px;height:216px" src="{{image}}"/>
       {% endfor %}
     </div>
-    <div>
+    <div style="margin-top: 20px;display: flex;flex-direction: row;justify-content: space-between;min-width: 200px;font-size: x-large;">
       {%if previousPage != None %}
         <a href="/{{previousPage}}">Previous</a>
       {%else%}

@@ -40,6 +40,10 @@ def getBrowseArgs(args):
         prog="simple-image browse",
         description='Browse all the images in the s3 bucket')
     parser.add_argument(
+        '--port', help="The http server port",
+        default=5001,
+        type=int)
+    parser.add_argument(
         'domain', help="The domain of image server, if this value is given, the image url will use this domain")
     parser.add_argument('bucket', help="The s3 bucket which host the image")
 
@@ -120,7 +124,7 @@ def browseImages():
                                previousPage=(
                                    previousPage if previousPage >= minPage else None),
                                nextPage=(nextPage if nextPage <= maxPage else None))
-    app.run(debug=False)
+    app.run(debug=False, port=args.port)
 
 
 def main():
