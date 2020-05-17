@@ -1,16 +1,20 @@
 #!/usr/bin/env python
 
-from PIL import Image
-from PIL import ImageGrab
-import boto3
 import argparse
-import uuid
-import os
 import io
+import os
+import uuid
+import sys
+
+import boto3
+from jinja2 import Template
+from PIL import Image, ImageGrab
+from flask import Flask, render_template
 
 
-def getArgs():
+def getUploadArgs(args):
     parser = argparse.ArgumentParser(
+        prog="simple-image upload",
         description='Resize image and upload it to given s3 bucket')
     parser.add_argument(
         '--resolution', help="The resolution of uploaded image, default is -1 which means keep the original size",
@@ -23,7 +27,20 @@ def getArgs():
         'image', help="The image which will be uploaded, if the value is -, the image in clipboard will be used.")
     parser.add_argument('bucket', help="The s3 bucket which host the image")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
+    print(args)
+    return args
+
+
+def getBrowseArgs(args):
+    parser = argparse.ArgumentParser(
+        prog="simple-image browse",
+        description='Browse all the images in the s3 bucket')
+    parser.add_argument(
+        'domain', help="The domain of image server, if this value is given, the image url will use this domain")
+    parser.add_argument('bucket', help="The s3 bucket which host the image")
+
+    args = parser.parse_args(args)
     print(args)
     return args
 
@@ -43,7 +60,10 @@ def getImage(imagePath):
     return Image.open(imagePath) if imagePath != '-' else ImageGrab.grabclipboard()
 
 
-def uploadToS3(image, bucket, size):
+def uploadImage():
+    args = getUploadArgs(sys.argv[2:])
+    size = getResolutionSize(args.resolution)
+    image = getImage(args.image)
     if(image == None):
         raise Exception('The image is not available.')
 
@@ -58,17 +78,42 @@ def uploadToS3(image, bucket, size):
     imgByteArr = io.BytesIO()
     targetImage.save(imgByteArr, format=image.format)
     s3Client.put_object(Body=imgByteArr.getvalue(),
-                        Bucket=bucket, Key=randomName, StorageClass='STANDARD_IA', ContentType=contentType)
-    return randomName
+                        Bucket=args.bucket, Key=randomName, StorageClass='STANDARD_IA', ContentType=contentType)
+    print(randomName) if args.domain == None else print(
+        args.domain+'/'+randomName)
+
+
+def browseImages():
+    args = getBrowseArgs(sys.argv[2:])
+    s3Client = boto3.client("s3")
+    app = Flask(__name__, template_folder='template')
+
+    @ app.route('/')
+    def index():
+        response = s3Client.list_objects(Bucket=args.bucket)
+        images = list(map(lambda x: args.domain+'/'+x['Key'],
+                          sorted(response['Contents'],
+                                 key=lambda x: x['LastModified'], reverse=True)))
+        return render_template('index.html', images=images)
+    app.run(debug=True)
 
 
 def main():
-    args = getArgs()
-    size = getResolutionSize(args.resolution)
-    image = getImage(args.image)
-    name = uploadToS3(image, args.bucket, size)
-    print(name) if args.domain == None else print(
-        args.domain+'/'+name)
+    parser = argparse.ArgumentParser(
+        description='Simple image tool to upload/browse image on remote server.',
+        usage='''simple-image <command> [<args>]
+
+    The most commonly used git commands are:
+       upload      Upload image to remote server
+       browse      Browse all images on remote server
+    ''')
+    parser.add_argument('command', choices=[
+                        'upload', 'browse'], help='Subcommand to run')
+    args = parser.parse_args(sys.argv[1:2])
+    if args.command == 'browse':
+        browseImages()
+    else:
+        uploadImage()
 
 
 if __name__ == '__main__':

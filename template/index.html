@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Simple Image Tool</title>
+</head>
+
+<body>
+    <div style="display:flex;flex-flow:row wrap;">
+      {% for image in images %}
+      <img style="margin:10px;height:216px" src="{{image}}"/>
+      {% endfor %}
+    </div>
+</body>
+
+</html>
