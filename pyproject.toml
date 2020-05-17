@@ -3,6 +3,8 @@ name = "simple-image-tool"
 version = "0.0.1"
 description = "A simple command line tool to upload new image or view existing images on s3"
 authors = ["Jiaming Shang <shangjiaming.yuan@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/sjmyuan/simple-image-tool"
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -10,6 +12,9 @@ Pillow = "^7.1.2"
 boto3 = "^1.13.11"
 Jinja2 = "^2.11.2"
 flask = "^1.1.2"
+
+[tool.poetry.scripts]
+simple-image-tool = 'simple_image_tool:main'
 
 [tool.poetry.dev-dependencies]
 
