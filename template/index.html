@@ -6,11 +6,26 @@
 </head>
 
 <body>
+  <div>
     <div style="display:flex;flex-flow:row wrap;">
       {% for image in images %}
       <img style="margin:10px;height:216px" src="{{image}}"/>
       {% endfor %}
     </div>
+    <div>
+      {%if previousPage != None %}
+        <a href="/{{previousPage}}">Previous</a>
+      {%else%}
+        <a>Previous</a>
+      {%endif%}
+
+      {%if nextPage != None %}
+        <a href="/{{nextPage}}">Next</a>
+      {%else%}
+        <a>Next</a>
+      {%endif%}
+    </div>
+  </div>
 </body>
 
 </html>

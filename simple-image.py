@@ -6,6 +6,7 @@ import os
 import uuid
 import sys
 import webbrowser
+import math
 
 import boto3
 from jinja2 import Template
@@ -85,18 +86,36 @@ def uploadImage():
     webbrowser.open(url, new=0) if args.open else print(url)
 
 
+def fetchAllImages(bucket, domain):
+    s3Client = boto3.client("s3")
+    response = s3Client.list_objects(
+        Bucket=bucket, Delimiter='/', MaxKeys=500)
+    contents = response['Contents']
+    while response['IsTruncated']:
+        nextPointer = response['NextMarker']
+        response = s3Client.list_objects(
+            Bucket=bucket, Delimiter='/', MaxKeys=500, NextMarker=nextPointer)
+        contents = contents + response['Contents']
+
+    return list(map(lambda x: domain+'/'+x['Key'],
+                    sorted(contents,
+                           key=lambda x: x['LastModified'], reverse=True)))
+
+
 def browseImages():
     args = getBrowseArgs(sys.argv[2:])
-    s3Client = boto3.client("s3")
+    images = fetchAllImages(args.bucket, args.domain)
+    pageSize = 50
+    minPage = 0
+    maxPage = math.floor(len(images)/pageSize)
     app = Flask(__name__, template_folder='template')
 
-    @ app.route('/')
-    def index():
-        response = s3Client.list_objects(Bucket=args.bucket)
-        images = list(map(lambda x: args.domain+'/'+x['Key'],
-                          sorted(response['Contents'],
-                                 key=lambda x: x['LastModified'], reverse=True)))
-        return render_template('index.html', images=images)
+    @ app.route('/', defaults={'page': 0})
+    @ app.route('/<page>')
+    def index(page):
+        return render_template('index.html', images=images[pageSize*page:pageSize*(page+1)],
+                               previousPage=page-1 if page >= minPage else None,
+                               nextPage=page+1 if page + 1 <= maxPage else None)
     app.run(debug=False)
 
 
