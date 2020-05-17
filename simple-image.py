@@ -5,6 +5,7 @@ import io
 import os
 import uuid
 import sys
+import webbrowser
 
 import boto3
 from jinja2 import Template
@@ -24,11 +25,12 @@ def getUploadArgs(args):
     parser.add_argument(
         '--domain', help="The domain of image server, if this value is given, the full image url will be generated")
     parser.add_argument(
+        '--open', help="Open the image in browser after uploaded the image", action='store_true')
+    parser.add_argument(
         'image', help="The image which will be uploaded, if the value is -, the image in clipboard will be used.")
     parser.add_argument('bucket', help="The s3 bucket which host the image")
 
     args = parser.parse_args(args)
-    print(args)
     return args
 
 
@@ -41,7 +43,6 @@ def getBrowseArgs(args):
     parser.add_argument('bucket', help="The s3 bucket which host the image")
 
     args = parser.parse_args(args)
-    print(args)
     return args
 
 
@@ -79,8 +80,9 @@ def uploadImage():
     targetImage.save(imgByteArr, format=image.format)
     s3Client.put_object(Body=imgByteArr.getvalue(),
                         Bucket=args.bucket, Key=randomName, StorageClass='STANDARD_IA', ContentType=contentType)
-    print(randomName) if args.domain == None else print(
-        args.domain+'/'+randomName)
+    url = randomName if args.domain == None else args.domain+'/'+randomName
+
+    webbrowser.open(url, new=0) if args.open else print(url)
 
 
 def browseImages():
@@ -95,7 +97,7 @@ def browseImages():
                           sorted(response['Contents'],
                                  key=lambda x: x['LastModified'], reverse=True)))
         return render_template('index.html', images=images)
-    app.run(debug=True)
+    app.run(debug=False)
 
 
 def main():
