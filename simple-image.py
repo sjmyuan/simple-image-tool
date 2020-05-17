@@ -94,7 +94,7 @@ def fetchAllImages(bucket, domain):
     while response['IsTruncated']:
         nextPointer = response['NextMarker']
         response = s3Client.list_objects(
-            Bucket=bucket, Delimiter='/', MaxKeys=500, NextMarker=nextPointer)
+            Bucket=bucket, Delimiter='/', MaxKeys=500, Marker=nextPointer)
         contents = contents + response['Contents']
 
     return list(map(lambda x: domain+'/'+x['Key'],
@@ -113,9 +113,13 @@ def browseImages():
     @ app.route('/', defaults={'page': 0})
     @ app.route('/<page>')
     def index(page):
-        return render_template('index.html', images=images[pageSize*page:pageSize*(page+1)],
-                               previousPage=page-1 if page >= minPage else None,
-                               nextPage=page+1 if page + 1 <= maxPage else None)
+        currentPage = int(page)
+        nextPage = currentPage + 1
+        previousPage = currentPage - 1
+        return render_template('index.html', images=images[pageSize*currentPage:pageSize*nextPage],
+                               previousPage=(
+                                   previousPage if previousPage >= minPage else None),
+                               nextPage=(nextPage if nextPage <= maxPage else None))
     app.run(debug=False)
 
 
