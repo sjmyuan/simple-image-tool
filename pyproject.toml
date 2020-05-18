@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "simple-image-tool"
-version = "0.0.1"
+version = "0.0.2"
 description = "A simple command line tool to upload new image or view existing images on s3"
 authors = ["Jiaming Shang <shangjiaming.yuan@gmail.com>"]
 license = "Apache-2.0"
