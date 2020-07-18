@@ -132,7 +132,7 @@ def main():
         description='Simple image tool to upload/browse image on remote server.',
         usage='''simple-image <command> [<args>]
 
-    The most commonly used git commands are:
+    The most commonly used commands are:
        upload      Upload image to remote server
        browse      Browse all images on remote server
     ''')
